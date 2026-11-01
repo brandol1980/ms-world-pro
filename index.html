@@ -28,7 +28,7 @@ footer{text-align:center;font-size:10px;color:#555;padding:6px}
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 <script>
 let TODOS=[];
-fetch('./índice.m3u').then(r=>r.text()).then(t=>{
+fetch('./index.m3u').then(r=>r.text()).then(t=>{
  let lineas=t.split('\n'), nombre='';
  lineas.forEach(l=>{
   l=l.trim();
