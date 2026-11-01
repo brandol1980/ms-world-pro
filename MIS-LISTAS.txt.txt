@@ -1,0 +1,13 @@
+
+TV WORLD PRO TOTAL - MIS LISTAS - FAVIO
+
+
+--- LISTA DE PRUEBA (DEMO) - ESTA FUNCIONA AHORA ---
+HOST: http://demo.tvworldpro.com:8080
+USUARIO: demo123
+CLAVE: demo123
+
+--- MI LISTA REAL (Cuando la tengas, pegala aqui) ---
+ HOST: http://iptv-org.github.io/iptv/index.m3u
+USUARIO: 
+CLAVE: 

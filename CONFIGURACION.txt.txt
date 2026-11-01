@@ -1,0 +1,17 @@
+APP: TV WORLD PRO TOTAL
+VERSION: PRO TOTAL 2026
+USER-AGENT: SoapBubble2
+AUTOBOOT: Activado
+EPG: Activado
+SUBTITULOS: Activado
+PIP: Activado
+AUTOPLAY: 30 segundos
+AUTO CLEAR CACHE: Activado
+RECENT LIMIT: 30
+HISTORY: 10
+
+USUARIO Y CLAVE DE PRUEBA HOY:
+Usuario: demo123
+Clave: demo123
+
+ESTADO: Guardado en OneDrive - No se borra
