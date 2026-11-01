@@ -2,56 +2,145 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FABIO-TV FUEGO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>FABIO-TV FUEGO v3.0 MUNDIAL</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-body{margin:0;background:#060a1e;color:#fff;font-family:Arial;display:flex;flex-direction:column;height:100vh}
-header{background:#000;border-bottom:3px solid #ff5a00;padding:12px;text-align:center}
-h1{margin:0;color:#ff5a00;font-size:22px}
-video{width:100%;height:38vh;background:#000}
-#search{width:94%;margin:10px 3%;padding:13px;border-radius:25px;border:1px solid #22306a;background:#111c3f;color:#fff;outline:none}
-#info{text-align:center;padding:6px;color:#8aa0ff;font-size:12px}
-#lista{flex:1;overflow:auto}
-.c{padding:14px;border-bottom:1px solid #141f4a;cursor:pointer}
-.c:hover{background:#111c3f}
-.c b{font-size:14px}
-footer{text-align:center;font-size:10px;color:#555;padding:6px}
+*{box-sizing:border-box}
+body{margin:0;background:#08132e;color:white;font-family:Arial,Helvetica,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.top{height:56px;background:#0a1931;border-bottom:3px solid #ff6a00;display:flex;align-items:center;justify-content:space-between;padding:0 15px;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:22px}
+.logo .fuego{color:#ff6a00}
+.badge-top{font-size:12px;background:#11244a;padding:5px 10px;border-radius:20px;border:1px solid #ff6a00}
+.quick{display:flex;gap:6px;padding:8px;background:#0f2040;overflow-x:auto;flex-shrink:0}
+.quick button{background:#1a2f5a;border:1px solid #ff6a00;color:white;padding:8px 14px;border-radius:20px;font-weight:bold;cursor:pointer;white-space:nowrap}
+.quick button.active,.quick button:hover{background:#ff6a00}
+.main{flex:1;display:flex;overflow:hidden}
+.left{width:35%;max-width:320px;background:#0f2040;border-right:2px solid #1a2f5a;display:flex;flex-direction:column}
+.right{flex:1;background:#081229;display:flex;flex-direction:column;padding:8px;overflow:hidden}
+#search{width:92%;margin:10px auto;padding:12px 15px;border-radius:25px;border:1px solid #ff6a00;background:#11244a;color:white;font-size:14px;display:block}
+.country{padding:12px 12px;border-bottom:1px solid #1a2f5a;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.country:hover{background:#1a2f5a} .country.active{background:#ff6a00;font-weight:bold}
+.count{font-size:11px;background:#11244a;padding:3px 8px;border-radius:12px;border:1px solid #ff6a00}
+.country.active .count{background:white;color:#ff6a00}
+#player{width:100%;aspect-ratio:16/9;background:black;border-radius:12px;border:2px solid #ff6a00;flex-shrink:0}
+#info{background:#11244a;margin:8px 0;padding:10px;border-radius:8px;font-size:13px;border-left:4px solid #ff6a00;display:flex;justify-content:space-between;align-items:center}
+.live{background:red;color:white;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:bold}
+#list{flex:1;overflow-y:auto;background:#0f2040;border-radius:8px}
+.item{padding:12px 10px;border-bottom:1px solid #1a2f5a;cursor:pointer;font-size:13px;display:flex;justify-content:space-between}
+.item:hover{background:#1a2f5a}
 </style>
 </head>
 <body>
-<header><h1>🔥 FABIO-TV FUEGO v3.0</h1><div style="color:#aaa;font-size:11px">30.195 canales - TODO EN 1</div></header>
-<video id="v" controls autoplay playsinline></video>
-<input id="search" placeholder="Buscar: COLOMBIA, PERU, MEXICO, DEPORTES...">
-<div id="info">Cargando canales...</div>
-<div id="lista"></div>
-<footer>FABIO-TV FUEGO - Tu app definitiva</footer>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+<div class="top">
+<div class="logo">🔥 FABIO-TV <span class="fuego">FUEGO</span></div>
+<div class="badge-top" id="totalCount">Cargando 30.195...</div>
+</div>
+<div class="quick">
+<button onclick="filterQuick('peru')">🇵🇪 PERUANO</button>
+<button onclick="filterQuick('espn')">ESPN</button>
+<button onclick="filterQuick('fox')">FOX</button>
+<button onclick="filterQuick('champions')">🏆 CHAMPIONS</button>
+<button onclick="filterQuick('liga 1')">LIGA 1 MAX</button>
+<button onclick="filterQuick('golperu')">GOLPERU</button>
+</div>
+<div class="main">
+<div class="left">
+<input id="search" placeholder="Buscar país o canal...">
+<div id="countries" style="overflow-y:auto;flex:1"></div>
+</div>
+<div class="right">
+<video id="player" controls autoplay playsinline></video>
+<div id="info"><span id="infoText">FABIO-TV FUEGO v3.0 - Selecciona un país</span><span class="live">● LIVE</span></div>
+<div id="list"></div>
+</div>
+</div>
 <script>
-let TODOS=[];
-fetch('./index.m3u').then(r=>r.text()).then(t=>{
- let lineas=t.split('\n'), nombre='';
- lineas.forEach(l=>{
-  l=l.trim();
-  if(l.startsWith('#EXTINF')){nombre=l.split(',').pop()}
-  else if(l.startsWith('http')){if(nombre){TODOS.push({n:nombre,u:l});nombre=''}}});
- document.getElementById('info').textContent=TODOS.length+' canales cargados';
- mostrar(TODOS.slice(0,800));
+let allChannels=[]; let byCountry={};
+const video=document.getElementById('player');
+const listDiv=document.getElementById('list');
+const countriesDiv=document.getElementById('countries');
+const infoText=document.getElementById('infoText');
+const searchInput=document.getElementById('search');
+const totalCount=document.getElementById('totalCount');
+let hls=null; let retry=0;
+
+function play(url,name){
+  retry=0; infoText.innerText=name;
+  if(hls){ hls.destroy(); hls=null; }
+  if(Hls.isSupported()){
+    hls=new Hls({maxBufferLength:40,maxMaxBufferLength:90,liveSyncDurationCount:2,enableWorker:true});
+    hls.loadSource(url); hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,()=>{ video.play().catch(()=>{}); });
+    hls.on(Hls.Events.ERROR,(e,data)=>{
+      if(data.fatal && retry<6){
+        retry++;
+        infoText.innerText='Reconectando '+name+' ('+retry+'/6)';
+        setTimeout(()=>{ hls.loadSource(url); hls.startLoad(); },2000);
+      } else {
+        infoText.innerText='⚠️ Link cortado. Prueba otro - '+name;
+      }
+    });
+  } else { video.src=url; video.play().catch(()=>{}); }
+}
+function detectCountry(name){
+  const n=name.toUpperCase();
+  if(n.includes('PERU')||n.includes('LIGA 1')||n.includes('GOLPERU')) return 'Peru';
+  if(n.includes('COLOMBIA')) return 'Colombia';
+  if(n.includes('MEXICO')||n.includes('MÉXICO')) return 'Mexico';
+  if(n.includes('ESPN')||n.includes('FOX')||n.includes('CHAMPIONS')||n.includes('SPORT')) return 'Deportes';
+  if(n.includes('CHILE')) return 'Chile';
+  if(n.includes('ARGENTINA')) return 'Argentina';
+  if(n.includes('ECUADOR')) return 'Ecuador';
+  return 'Otros';
+}
+function showCountry(country){
+  document.querySelectorAll('.country').forEach(c=>c.classList.remove('active'));
+  document.getElementById('c-'+country)?.classList.add('active');
+  renderList(byCountry[country]||[]);
+}
+function renderList(chans){
+  listDiv.innerHTML=chans.slice(0,300).map(ch=>`<div class="item" onclick="play('${ch.url.replace(/'/g,"\\'")}','${ch.name.replace(/'/g," ")}')"><span>${ch.name}</span><span>▶</span></div>`).join('');
+}
+function filterQuick(q){
+  const filtered=allChannels.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())).slice(0,300);
+  infoText.innerText='Mostrando: '+q.toUpperCase()+' - '+filtered.length;
+  renderList(filtered);
+}
+function loadM3U(text){
+  const lines=text.split('\n');
+  for(let i=0;i<lines.length;i++){
+    if(lines[i].startsWith('#EXTINF')){
+      let name=lines[i].split(',').pop().trim()||'Canal';
+      let url=lines[i+1]?.trim();
+      if(!url||!url.startsWith('http')) continue;
+      let country=detectCountry(name);
+      allChannels.push({name,url,country});
+      if(!byCountry[country]) byCountry[country]=[];
+      byCountry[country].push({name,url});
+    }
+  }
+}
+async function init(){
+  try{ let t1=await fetch('./index.m3u').then(r=>r.text()); loadM3U(t1); }catch(e){}
+  try{ let t2=await fetch('./deportes-en-vivo.m3u').then(r=>r.text()); loadM3U(t2); }catch(e){}
+  let ordered=Object.keys(byCountry).sort((a,b)=>{
+    if(a==='Peru') return -1; if(b==='Peru') return 1;
+    if(a==='Deportes') return -1; if(b==='Deportes') return 1;
+    return a.localeCompare(b);
+  });
+  let html=''; ordered.forEach(c=>{ html+=`<div class="country" id="c-${c}" onclick="showCountry('${c}')"><span>${c}</span><span class="count">${byCountry[c].length}</span></div>`; });
+  countriesDiv.innerHTML=html;
+  totalCount.innerText='Found '+allChannels.length+' channel(s)';
+  if(byCountry['Peru']) showCountry('Peru'); else if(byCountry['Deportes']) showCountry('Deportes'); else if(ordered[0]) showCountry(ordered[0]);
+}
+searchInput.addEventListener('input', e=>{
+  const q=e.target.value.toLowerCase();
+  if(!q) return;
+  const fil=allChannels.filter(c=>c.name.toLowerCase().includes(q)).slice(0,200);
+  renderList(fil);
 });
-function mostrar(arr){
- document.getElementById('lista').innerHTML=arr.map(x=>`<div class=c onclick="repro('${x.u.replace(/'/g,"")}')"><b>${x.n}</b> ▶</div>`).join('');
-}
-function repro(url){
- let v=document.getElementById('v');
- if(Hls.isSupported()){let h=new Hls();h.loadSource(url);h.attachMedia(v);h.on(Hls.Events.MANIFEST_PARSED,()=>v.play());}
- else{v.src=url;v.play();}
- window.scrollTo(0,0);
-}
-document.getElementById('search').oninput=e=>{
- let q=e.target.value.toLowerCase();
- let f=TODOS.filter(c=>c.n.toLowerCase().includes(q));
- document.getElementById('info').textContent=f.length+' resultados';
- mostrar(f.slice(0,800));
-}
+init();
 </script>
 </body>
 </html>
